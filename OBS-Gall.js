@@ -1,5 +1,5 @@
-const artFolder = './Assets/Art/'
-const logoFolder = './Assets/Logos/'
+const artFolder = "./Assets/Art/";
+const logoFolder = "./Assets/Logos/";
 
 const history = [];
 
@@ -12,41 +12,42 @@ const history = [];
  */
 
 /**
- * 
+ *
  * @param {string} [image=image] - HTML ID for image
  * @param {string} [name=artist] - HTML ID for name
  * @param {string} [handle=handle] - HTML ID for handle
  * @param {string} [icon=icon] - HTML ID for icon
  * @returns {elements} - Object with img, name, handle, and icon values
  */
-function getElements(image, name, handle, icon){
-    if(!image) image = "image";
-    if(!name) name = "artist";
-    if(!handle) handle = "handle";
-    if(!icon) icon = "icon";
+function getElements(image, name, handle, icon) {
+    if (!image) image = "image";
+    if (!name) name = "artist";
+    if (!handle) handle = "handle";
+    if (!icon) icon = "icon";
 
-    image = document.getElementById(image)
-    name = document.getElementById(name)
-    handle = document.getElementById(handle)
-    icon = document.getElementById(icon)
+    image = document.getElementById(image);
+    name = document.getElementById(name);
+    handle = document.getElementById(handle);
+    icon = document.getElementById(icon);
 
-    return {img: image, name: name, handle: handle, icon: icon}
-    
+    return { img: image, name: name, handle: handle, icon: icon };
 }
-
 
 /**
  * This function runs an animation for the element, with the inputed style and duration
- * @param {object[]} element - An array HTML elements that will have the animation affected
- * @param {'fadeIn' | 'fadeOut' | 'slideInR' | 'slideOutR' | 'slideInL' | 'slideOutL'} style - A string of the type of animation 
+ * @param {HTMLElement[]} element - An array HTML elements that will have the animation affected
+ * @param {'fadeIn' | 'fadeOut' | 'slideInR' | 'slideOutR' | 'slideInL' | 'slideOutL'} style - A string of the type of animation
  * @param {number} duration - The duration of the animation in seconds
  */
 
-function animation(element, style, duration){
-    console.log(element)
-    for(let el of element){
-        el.style.animation=`${style} ${duration}s`
-    }
+function animation(element, style, duration) {
+    return new Promise((resolve) => {
+        console.log(element);
+        for (let el of element) {
+            el.style.animation = `${style} ${duration}s forwards`;
+        }
+        element[0].addEventListener("animationend", resolve, { once: true });
+    });
 }
 
 /**
@@ -57,39 +58,37 @@ function animation(element, style, duration){
  * @param {object} [icon] - An HTML elemnt for the artist socail icon
  */
 
-function randomImage(data, image, name, handle, icon){
-    console.log(data.artists)
-    let images = data.images
-    let artists = data.artists
-    if(!image) image = document.getElementById("image");
-    if(!name) name = document.getElementById("artist");
-    if(!handle) handle = document.getElementById("handle");
-    if(!icon) icon = document.getElementById("icon");
+function randomImage(data, image, name, handle, icon) {
+    console.log(data.artists);
+    let images = data.images;
+    let artists = data.artists;
+    if (!image) image = document.getElementById("image");
+    if (!name) name = document.getElementById("artist");
+    if (!handle) handle = document.getElementById("handle");
+    if (!icon) icon = document.getElementById("icon");
 
+    let index = Math.floor(Math.random() * images.length);
+    console.log(index);
 
-
-    let index = Math.floor(Math.random() *  images.length)
-    console.log(index)
-
-    while(history.includes(images[index].file)) {
-        index = Math.floor(Math.random() *  images.length)
+    while (history.includes(images[index].file)) {
+        index = Math.floor(Math.random() * images.length);
     }
-    console.log(history)
-    if(history.length > 3) history.shift()
-    history.push(images[index].file)
-    image.setAttribute("src", artFolder+images[index].file)
-    let artistData = artists[images[index].artist]
-    console.log(artistData)
-    name.innerHTML = artistData.name
+    console.log(history);
+    if (history.length > 3) history.shift();
+    history.push(images[index].file);
+    image.setAttribute("src", artFolder + images[index].file);
+    let artistData = artists[images[index].artist];
+    console.log(artistData);
+    name.innerHTML = artistData.name;
 
-    if(!(artistData.tag === undefined)){
-        handle.innerHTML = artistData.tag
-        icon.setAttribute("src", logoFolder+artistData.icon)
-        icon.style.display = "inline-block"
+    if (!(artistData.tag === undefined)) {
+        handle.innerHTML = artistData.tag;
+        icon.setAttribute("src", logoFolder + artistData.icon);
+        icon.style.display = "inline-block";
     } else {
-        console.log("No tag")
-        handle.innerHTML = ""
-        icon.style.display = "none"
+        console.log("No tag");
+        handle.innerHTML = "";
+        icon.style.display = "none";
         // handle.innerHTML = "PLACEHOLDER"
         // icon.setAttribute("src", socials.tiktok)
     }
@@ -101,8 +100,8 @@ function randomImage(data, image, name, handle, icon){
  * @returns {Promise}
  */
 function sleep(seconds) {
-    let ms = seconds * 1000
-    return new Promise(resolve => setTimeout(resolve, ms || DEF_DELAY));
+    let ms = seconds * 1000;
+    return new Promise((resolve) => setTimeout(resolve, ms || DEF_DELAY));
 }
 
-export {animation, randomImage, sleep, getElements };
+export { animation, randomImage, sleep, getElements };
