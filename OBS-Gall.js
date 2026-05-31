@@ -1,23 +1,21 @@
 const artFolder = "./Assets/Art/";
 const logoFolder = "./Assets/Logos/";
 
-const history = [];
-
 /**
- * @typedef {Object} elements
- * @property {HTMLElement} img - HTML Image element
- * @property {HTMLElement} name - HTML Artist name element
- * @property {HTMLElement} handle - HTML Artist handle element
- * @property {HTMLElement} icon - HTML Artist icon element
+ * @typedef {Object} Elements
+ * @property {?HTMLElement} img - HTML Image element
+ * @property {?HTMLElement} name - HTML Artist name element
+ * @property {?HTMLElement} handle - HTML Artist handle element
+ * @property {?HTMLElement} icon - HTML Artist icon element
  */
 
 /**
  *
- * @param {string} [image=image] - HTML ID for image
- * @param {string} [name=artist] - HTML ID for name
- * @param {string} [handle=handle] - HTML ID for handle
- * @param {string} [icon=icon] - HTML ID for icon
- * @returns {elements} - Object with img, name, handle, and icon values
+ * @param {string} [image] - HTML ID for image
+ * @param {string} [name] - HTML ID for name
+ * @param {string} [handle] - HTML ID for handle
+ * @param {string} [icon] - HTML ID for icon
+ * @returns {Elements} - Object with img, name, handle, and icon values
  */
 function getElements(image, name, handle, icon) {
     if (!image) image = "image";
@@ -31,6 +29,155 @@ function getElements(image, name, handle, icon) {
     icon = document.getElementById(icon);
 
     return { img: image, name: name, handle: handle, icon: icon };
+}
+
+/**
+ * Object for the artist data used in the config json
+ * @typedef {Object} Artist
+ * @property {string} name
+ * @property {?string} tag
+ * @property {?string} icon
+ */
+
+/**
+ * Object for the artwork data used in the config json
+ * @typedef {Object} Artwork
+ * @property {string} file
+ * @property {string} artist
+ */
+
+/**
+ * Main object for the config json
+ * @typedef {Object} Config
+ * @property {Array<Artwork>} images
+ * @property {Object<string, Artist>} artists
+ */
+
+/** @typedef {Artwork & Artist} CurrentArtwork */
+
+/**
+ * Manager for the Artwork Gallery
+ * - Compared to the older method, now the gallery will be shuffled, and then displayed, making sure all artwork show sbefore repeats.
+ * - Using {@link Gallery.next()} it will advance to the next artwork.
+ * - Using {@link Gallery.applyArtwork()} it will apply the current artwork, and relative data to the gallery display
+ */
+class Gallery {
+    /**
+     * All of the elements used by the gallery
+     * @type {Elements}
+     * @readonly
+     */
+    ele = {};
+
+    /**
+     * Array of all of the images used by the gallery
+     * - Pulled from {@link Config}
+     * @type {Array<Artwork>}
+     * @readonly
+     */
+    images = [];
+
+    /**
+     * Object of all of the artists used by the gallery
+     * - Pulled from {@link Config}
+     * @type {Object<string, Artist>}
+     * @readonly
+     */
+    artists = {};
+
+    index = 0;
+
+    /**
+     * The current queue of artwork
+     * @see {@link Gallery.shuffle()}
+     * @type {Array<Artwork>}
+     */
+    queue = [];
+
+    /**
+     * @param {Config} config
+     * @param {Elements} elements
+     */
+    constructor(config, elements) {
+        this.images = config.images;
+        this.artists = config.artists;
+        this.ele = elements;
+        this.shuffle();
+    }
+
+    /**
+     * Advance the current artwork to the next in the queue
+     * @param {boolean} shuffle - Will shuffle the queue when the last item is reached
+     * @see {@link Gallery.queue}
+     * @see {@link Gallery.shuffle()}
+     */
+    next(shuffle = true) {
+        const len = this.queue.length;
+        if (this.index + 1 >= len) {
+            if (shuffle) shuffle();
+            this.index = 0;
+        } else {
+            this.index += 1;
+        }
+    }
+
+    /**
+     * Shuffle all of the artwork randomly, then apply to the queue property
+     * @returns {Array<Artwork>} - Returns the new queue, also set to {@link Gallery.queue}
+     */
+    shuffle() {
+        const result = [...this.images];
+
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [result[i], result[j]] = [result[j], result[i]];
+        }
+        this.queue = result;
+        return this.queue;
+    }
+
+    /**
+     * Apply the artwork, either a specific one, or the current artwork to the elements
+     * @param {CurrentArtwork} [artwork] - Defaults to {@link Gallery.current}
+     */
+    applyArtwork(artwork = this.current) {
+        const { img, name, handle, icon } = this.ele;
+
+        img.setAttribute("src", artFolder + artwork.file);
+        name.innerHTML = artwork.name;
+        if (!(artwork.tag === undefined)) {
+            handle.innerHTML = artwork.tag;
+            icon.setAttribute("src", logoFolder + artwork.icon);
+            icon.style.display = "inline-block";
+        } else {
+            console.log("No tag");
+            handle.innerHTML = "";
+            icon.style.display = "none";
+        }
+    }
+
+    /**
+     * Gets the currently active artwork
+     * @returns {CurrentArtwork} - Combination of {@link Artwork} and {@link Artist}
+     * @see {@link Gallery.getArtwork()}
+     */
+    get current() {
+        return this.getArtwork(this.index);
+    }
+
+    /**
+     * Gets the artwork, and artist data at a specific index
+     * @param {number} index
+     * @returns {CurrentArtwork} - Combination of {@link Artwork} and {@link Artist}
+     */
+    getArtwork(index) {
+        const artwork = this.queue[index];
+        const artist = this.artists[artwork.artist];
+        return {
+            ...artwork,
+            ...artist,
+        };
+    }
 }
 
 /**
@@ -51,50 +198,6 @@ function animation(element, style, duration) {
 }
 
 /**
- * This function will get a random image, and update all elements based on those values
- * @param {object} [image] - An HTML image element
- * @param {object} [name] - An HTML elment for the artist name
- * @param {object} [handle] - An HTML elment for the artist handle
- * @param {object} [icon] - An HTML elemnt for the artist socail icon
- */
-
-function randomImage(data, image, name, handle, icon) {
-    console.log(data.artists);
-    let images = data.images;
-    let artists = data.artists;
-    if (!image) image = document.getElementById("image");
-    if (!name) name = document.getElementById("artist");
-    if (!handle) handle = document.getElementById("handle");
-    if (!icon) icon = document.getElementById("icon");
-
-    let index = Math.floor(Math.random() * images.length);
-    console.log(index);
-
-    while (history.includes(images[index].file)) {
-        index = Math.floor(Math.random() * images.length);
-    }
-    console.log(history);
-    if (history.length > 3) history.shift();
-    history.push(images[index].file);
-    image.setAttribute("src", artFolder + images[index].file);
-    let artistData = artists[images[index].artist];
-    console.log(artistData);
-    name.innerHTML = artistData.name;
-
-    if (!(artistData.tag === undefined)) {
-        handle.innerHTML = artistData.tag;
-        icon.setAttribute("src", logoFolder + artistData.icon);
-        icon.style.display = "inline-block";
-    } else {
-        console.log("No tag");
-        handle.innerHTML = "";
-        icon.style.display = "none";
-        // handle.innerHTML = "PLACEHOLDER"
-        // icon.setAttribute("src", socials.tiktok)
-    }
-}
-
-/**
  * To use this function it must be called with await before it
  * @param {number} seconds - The number of seconds to wait
  * @returns {Promise}
@@ -104,4 +207,4 @@ function sleep(seconds) {
     return new Promise((resolve) => setTimeout(resolve, ms || DEF_DELAY));
 }
 
-export { animation, randomImage, sleep, getElements };
+export { Gallery, animation, sleep, getElements };

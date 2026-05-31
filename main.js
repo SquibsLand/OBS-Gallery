@@ -1,4 +1,4 @@
-import { sleep, animation, randomImage, getElements } from "./OBS-Gall.js";
+import { Gallery, sleep, animation, getElements } from "./OBS-Gall.js";
 
 window.onload = async function () {
     fetch("./config.json")
@@ -7,8 +7,9 @@ window.onload = async function () {
             // This gets all of the default elements that are used
             let el = getElements();
 
-            // This gets a random image, and requires for an image, name, handle, and icon HTML element
-            randomImage(data, el.img, el.name, el.handle, el.icon);
+            const gallery = new Gallery(data, el);
+
+            gallery.applyArtwork();
             // This is a forever loop
             while (true) {
                 // This tells the program to sleep (wait) for 5 seconds
@@ -18,7 +19,8 @@ window.onload = async function () {
                 await animation([el.img], "slideOutL", 2);
                 console.log("Animation Done");
                 // The last animations are the appear animation
-                randomImage(data, el.img, el.name, el.handle, el.icon);
+                gallery.next();
+                gallery.applyArtwork();
                 animation([el.img], "slideInR", 2);
                 await animation([el.name, el.handle, el.icon], "fadeIn", 3);
                 await sleep(2);
