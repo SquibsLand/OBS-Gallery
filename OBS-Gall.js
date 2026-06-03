@@ -114,7 +114,7 @@ class Gallery {
     next(shuffle = true) {
         const len = this.queue.length;
         if (this.index + 1 >= len) {
-            if (shuffle) shuffle();
+            if (shuffle) this.shuffle();
             this.index = 0;
         } else {
             this.index += 1;
